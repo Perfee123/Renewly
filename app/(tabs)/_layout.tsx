@@ -1,35 +1,92 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { tabs } from "@/constants/data";
+import { components } from "@/constants/theme";
+import clsx from "clsx";
+import { BlurView } from "expo-blur";
+import { Tabs } from "expo-router";
+import { Image, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const tabBar = components.tabBar;
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+const TabLayout = () => {
+  const insets = useSafeAreaInsets();
+
+  const TabIcon = ({ focused, icon }: { focused: boolean; icon: any }) => {
+    return (
+      <View className="tabs-icon">
+        <View className={clsx("tabs-pill", focused && "tabs-active")}>
+          <Image
+            source={icon}
+            resizeMode="contain"
+            className="tabs-glyph"
+            style={{ tintColor: "#000000" }}
+          />
+        </View>
+      </View>
+    );
+  };
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          position: "absolute",
+          bottom: Math.max(insets.bottom, tabBar.horizontalInset),
+          height: tabBar.height,
+          marginHorizontal: tabBar.horizontalInset,
+          borderRadius: tabBar.radius,
+
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
+          elevation: 10,
+
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.12,
+          shadowRadius: 24,
+        },
+
+        tabBarItemStyle: {
+          paddingVertical: tabBar.height / 2 - tabBar.iconFrame / 1.6,
+        },
+        tabBarIconStyle: {
+          width: tabBar.iconFrame,
+          height: tabBar.iconFrame,
+          alignItems: "center",
+        },
+
+        tabBarBackground: () => (
+          <View
+            style={{
+              flex: 1,
+              borderRadius: tabBar.radius,
+              overflow: "hidden",
+            }}>
+            <BlurView
+              tint="light"
+              intensity={80}
+              style={StyleSheet.absoluteFill}
+              experimentalBlurMethod="dimezisBlurView"
+            />
+          </View>
+        ),
       }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
+      {tabs.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: tab.title,
+            tabBarIcon: ({ focused }) => (
+              <TabIcon focused={focused} icon={tab.icon} />
+            ),
+          }}
+        />
+      ))}
     </Tabs>
   );
-}
+};
+
+export default TabLayout;
