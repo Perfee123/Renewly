@@ -41,10 +41,11 @@ function InitialLayout() {
     if (!isLoaded || !fontsLoaded) return;
 
     const inTabsGroup = segments[0] === "(tabs)";
+    const inAuthGroup = segments[0] === "(auth)";
 
     if (isSignedIn && !inTabsGroup) {
-      router.replace("/(tabs)/");
-    } else if (!isSignedIn) {
+      router.replace("/(tabs)");
+    } else if (!isSignedIn && !inAuthGroup) {
       router.replace("/(auth)/sign-in");
     }
   }, [isSignedIn, isLoaded, fontsLoaded, segments]);

@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 export default function SignInScreen() {
-  const { signIn, setActive, isLoaded } = useSignIn();
+  const { signIn } = useSignIn();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState("");
@@ -22,24 +22,26 @@ export default function SignInScreen() {
   const [error, setError] = useState("");
 
   const onSignInPress = async () => {
-    if (!isLoaded) return;
+    if (!signIn) return;
     setLoading(true);
     setError("");
     try {
-      const signInAttempt = await signIn.create({
+      const result = await signIn.create({
         identifier: emailAddress,
         password,
       });
 
-      if (signInAttempt.status === "complete") {
-        await setActive({ session: signInAttempt.createdSessionId });
-        router.replace("/(tabs)/");
+      if (result?.error) {
+        setError(result.error.longMessage || "An error occurred.");
+      } else if (signIn.status === "complete") {
+        await signIn.finalize();
+        router.replace("/(tabs)");
       } else {
-        console.error(JSON.stringify(signInAttempt, null, 2));
+        console.error("Sign in incomplete: status", signIn.status);
         setError("Sign in is incomplete.");
       }
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
+      console.error("Sign in error:", err.errors?.[0]?.code || err.message || "Unknown error");
       setError(err.errors?.[0]?.longMessage || "An error occurred.");
     } finally {
       setLoading(false);
@@ -90,6 +92,8 @@ export default function SignInScreen() {
                 placeholder="Enter your password"
                 placeholderTextColor="rgba(0,0,0,0.4)"
                 secureTextEntry={true}
+                autoCapitalize="none"
+                autoCorrect={false}
                 onChangeText={setPassword}
                 className={`auth-input ${error ? "auth-input-error" : ""}`}
               />

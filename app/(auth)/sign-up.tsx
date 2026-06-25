@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 export default function SignUpScreen() {
-  const { signUp, setActive, isLoaded } = useSignUp();
+  const { signUp } = useSignUp();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState("");
@@ -22,24 +22,26 @@ export default function SignUpScreen() {
   const [error, setError] = useState("");
 
   const onSignUpPress = async () => {
-    if (!isLoaded) return;
+    if (!signUp) return;
     setLoading(true);
     setError("");
     try {
-      const signUpAttempt = await signUp.create({
+      const result = await signUp.create({
         emailAddress,
         password,
       });
 
-      if (signUpAttempt.status === "complete") {
-        await setActive({ session: signUpAttempt.createdSessionId });
-        router.replace("/(tabs)/");
+      if (result?.error) {
+        setError(result.error.longMessage || "An error occurred.");
+      } else if (signUp.status === "complete") {
+        await signUp.finalize();
+        router.replace("/(tabs)");
       } else {
-        console.error(JSON.stringify(signUpAttempt, null, 2));
-        setError(`Sign up incomplete. Status: ${signUpAttempt.status}`);
+        console.error("Sign up incomplete: status", signUp.status);
+        setError(`Sign up incomplete. Status: ${signUp.status}`);
       }
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
+      console.error("Sign up error:", err.errors?.[0]?.code || err.message || "Unknown error");
       setError(err.errors?.[0]?.longMessage || "An error occurred.");
     } finally {
       setLoading(false);
@@ -90,6 +92,8 @@ export default function SignUpScreen() {
                 placeholder="Create a password"
                 placeholderTextColor="rgba(0,0,0,0.4)"
                 secureTextEntry={true}
+                autoCapitalize="none"
+                autoCorrect={false}
                 onChangeText={setPassword}
                 className={`auth-input ${error ? "auth-input-error" : ""}`}
               />
